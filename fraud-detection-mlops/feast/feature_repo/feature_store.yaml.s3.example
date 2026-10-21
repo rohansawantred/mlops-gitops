@@ -1,0 +1,10 @@
+# Example for cluster use when dataSource.type=s3 (rendered/mounted via Helm ConfigMap)
+project: fraud_detection
+provider: local
+registry: ${FEAST_REGISTRY_PATH}
+online_store:
+  type: redis
+  connection_string: ${FEAST_REDIS_CONNECTION_STRING}
+offline_store:
+  type: file
+entity_key_serialization_version: 2

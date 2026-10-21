@@ -1,0 +1,98 @@
+{{- if .Values.inference.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "fraud.fullname" . }}-inference
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "fraud.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.inference.replicas }}
+  selector:
+    matchLabels:
+      app: {{ include "fraud.fullname" . }}-inference
+  template:
+    metadata:
+      labels:
+        app: {{ include "fraud.fullname" . }}-inference
+        {{- include "fraud.labels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ .Values.kubeflow.serviceAccountName }}
+      {{- with .Values.image.pullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: inference
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: {{ include "fraud.fullname" . }}-config
+            {{- if eq .Values.dataSource.type "s3" }}
+            - secretRef:
+                name: {{ .Values.dataSource.s3.secretName }}
+            {{- else if eq .Values.dataSource.type "sql" }}
+            - secretRef:
+                name: {{ .Values.dataSource.sql.secretName }}
+            {{- end }}
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            {{- toYaml .Values.inference.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            capabilities:
+              drop: ["ALL"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "fraud.fullname" . }}-inference
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "fraud.labels" . | nindent 4 }}
+spec:
+  selector:
+    app: {{ include "fraud.fullname" . }}-inference
+  ports:
+    - name: http
+      port: {{ .Values.inference.servicePort }}
+      targetPort: http
+{{- if .Values.inference.route.enabled }}
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: {{ include "fraud.fullname" . }}-inference
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "fraud.labels" . | nindent 4 }}
+spec:
+  {{- if .Values.inference.route.host }}
+  host: {{ .Values.inference.route.host | quote }}
+  {{- end }}
+  to:
+    kind: Service
+    name: {{ include "fraud.fullname" . }}-inference
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+{{- end }}
+{{- end }}

@@ -1,0 +1,9 @@
+project: fraud_detection
+provider: local
+registry: ${FEAST_REGISTRY_PATH:data/registry.db}
+online_store:
+  type: ${FEAST_ONLINE_STORE_TYPE:sqlite}
+  path: ${FEAST_ONLINE_STORE_PATH:data/online_store.db}
+offline_store:
+  type: file
+entity_key_serialization_version: 2

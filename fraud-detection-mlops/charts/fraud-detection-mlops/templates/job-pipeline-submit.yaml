@@ -1,0 +1,58 @@
+{{- if .Values.pipeline.enableSubmitJob }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "fraud.fullname" . }}-pipeline-submit
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "fraud.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app: {{ include "fraud.fullname" . }}-pipeline-submit
+    spec:
+      restartPolicy: OnFailure
+      serviceAccountName: {{ .Values.kubeflow.serviceAccountName }}
+      {{- with .Values.image.pullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: submit
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "fraud.fullname" . }}-config
+            {{- if eq .Values.dataSource.type "s3" }}
+            - secretRef:
+                name: {{ .Values.dataSource.s3.secretName }}
+            {{- else if eq .Values.dataSource.type "sql" }}
+            - secretRef:
+                name: {{ .Values.dataSource.sql.secretName }}
+            {{- end }}
+          command:
+            - /bin/bash
+            - -ec
+            - |
+              python - <<'PY'
+              import os
+              print("Compiling fraud detection pipeline...")
+              from pipelines.fraud_pipeline import compile_pipeline
+              path = compile_pipeline("/tmp/fraud_detection_pipeline.yaml")
+              api = os.environ.get("PIPELINE_API", "")
+              print(f"Compiled {path}. Upload/run against KFP at {api}")
+              print("Use kfp client or UI to create a run with env from ConfigMap/Secrets.")
+              # Soft success: cluster-specific KFP auth varies by operator install
+              PY
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            capabilities:
+              drop: ["ALL"]
+{{- end }}

@@ -1,0 +1,24 @@
+dataSource:
+  type: s3
+  s3:
+    bucket: fraud-raw
+    prefix: transactions
+    endpoint: "https://s3.openshift-storage.svc"
+    region: us-east-1
+    secretName: feast-s3-credentials
+
+mlflow:
+  trackingUri: "http://mlflow.mlflow.svc.cluster.local:5000"
+
+kubeflow:
+  namespace: kubeflow
+  pipelineApi: "http://ml-pipeline.kubeflow.svc.cluster.local:8888"
+
+feast:
+  onlineStoreType: redis
+  redisConnectionString: "feast-redis.feast:6379"
+
+inference:
+  enabled: true
+  route:
+    enabled: true

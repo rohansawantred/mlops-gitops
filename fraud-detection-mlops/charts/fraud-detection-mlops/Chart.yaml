@@ -1,0 +1,6 @@
+apiVersion: v2
+name: fraud-detection-mlops
+description: Fraud detection MLOps app (Kubeflow + MLflow + Feast) for OpenShift — does not install platform operators
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

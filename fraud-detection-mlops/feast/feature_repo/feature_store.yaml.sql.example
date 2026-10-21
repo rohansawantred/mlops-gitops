@@ -1,0 +1,21 @@
+# Example for cluster use when dataSource.type=sql
+project: fraud_detection
+provider: local
+registry: ${FEAST_REGISTRY_PATH}
+online_store:
+  type: postgres
+  host: ${FEAST_PG_HOST}
+  port: ${FEAST_PG_PORT:5432}
+  database: ${FEAST_PG_DATABASE}
+  db_schema: ${FEAST_PG_SCHEMA:feast}
+  user: ${FEAST_PG_USER}
+  password: ${FEAST_PG_PASSWORD}
+offline_store:
+  type: postgres
+  host: ${FEAST_OFFLINE_PG_HOST}
+  port: ${FEAST_OFFLINE_PG_PORT:5432}
+  database: ${FEAST_OFFLINE_PG_DATABASE}
+  db_schema: ${FEAST_OFFLINE_PG_SCHEMA:fraud}
+  user: ${FEAST_OFFLINE_PG_USER}
+  password: ${FEAST_OFFLINE_PG_PASSWORD}
+entity_key_serialization_version: 2

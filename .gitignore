@@ -13,3 +13,10 @@ __pycache__/
 dist/
 build/
 *.egg-info/
+mlruns/
+fraud-detection-mlops/mlruns/
+fraud-detection-mlops/artifacts/
+fraud-detection-mlops/samples/*.parquet
+fraud-detection-mlops/feast/feature_repo/data/
+fraud-detection-mlops/pipelines/fraud_detection_pipeline.yaml
+*.joblib

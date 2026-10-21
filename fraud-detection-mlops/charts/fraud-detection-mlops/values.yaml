@@ -1,0 +1,79 @@
+nameOverride: ""
+fullnameOverride: fraud-detection
+
+namespace: fraud-mlops
+createNamespace: true
+
+# Exactly one active: s3 | sql  (local is for smoke only, not cluster default)
+dataSource:
+  type: s3
+  s3:
+    bucket: fraud-raw
+    prefix: transactions
+    endpoint: ""
+    region: us-east-1
+    secretName: feast-s3-credentials
+  sql:
+    secretName: feast-jdbc-credentials
+    schema: fraud
+    table: transactions
+
+feast:
+  repoPath: /opt/fraud/feast/feature_repo
+  registryPath: /var/feast/registry.db
+  # Point at Feast operator-managed stores
+  onlineStoreType: redis
+  redisConnectionString: "feast-redis.feast:6379"
+  materializeDays: 7
+
+mlflow:
+  trackingUri: "http://mlflow.mlflow.svc.cluster.local:5000"
+  experimentName: fraud-detection
+  registeredModelName: fraud-detection-model
+
+kubeflow:
+  namespace: kubeflow
+  # Pipeline API / UI host used by submit job (adjust to your KFP install)
+  pipelineApi: "http://ml-pipeline.kubeflow.svc.cluster.local:8888"
+  serviceAccountName: fraud-pipeline-runner
+
+image:
+  repository: image-registry.openshift-image-registry.svc:5000/fraud-mlops/fraud-pipeline
+  tag: latest
+  pullPolicy: IfNotPresent
+  pullSecrets: []
+
+pipeline:
+  enableSubmitJob: true
+  compileOnlyConfigMap: true
+  params:
+    minPrAuc: 0.5
+    minF1: 0.3
+    maxDepth: 4
+    nEstimators: 100
+    learningRate: 0.1
+    runMaterialize: false
+
+inference:
+  enabled: true
+  replicas: 1
+  servicePort: 8080
+  route:
+    enabled: true
+    host: ""
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+  modelUri: "models:/fraud-detection-model/Staging"
+  threshold: "0.5"
+
+rbac:
+  create: true
+
+# Secret templates create empty placeholder Secrets (fill via oc / ExternalSecrets)
+secrets:
+  createPlaceholders: true

@@ -1,0 +1,21 @@
+dataSource:
+  type: sql
+  sql:
+    secretName: feast-jdbc-credentials
+    schema: fraud
+    table: transactions
+
+mlflow:
+  trackingUri: "http://mlflow.mlflow.svc.cluster.local:5000"
+
+kubeflow:
+  namespace: kubeflow
+  pipelineApi: "http://ml-pipeline.kubeflow.svc.cluster.local:8888"
+
+feast:
+  onlineStoreType: postgres
+
+inference:
+  enabled: true
+  route:
+    enabled: true

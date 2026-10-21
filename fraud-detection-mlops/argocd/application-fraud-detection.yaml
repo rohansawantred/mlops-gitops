@@ -1,0 +1,29 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: fraud-detection-mlops
+  namespace: openshift-gitops
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    # Replace with your Git repo URL after push
+    repoURL: https://github.com/EXAMPLE/mlops-gitops.git
+    targetRevision: HEAD
+    path: fraud-detection-mlops/charts/fraud-detection-mlops
+    helm:
+      # Choose one: examples/values-s3.yaml or examples/values-sql.yaml
+      valueFiles:
+        - values.yaml
+        - examples/values-s3.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: fraud-mlops
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+    # Enable automated sync when ready:
+    # automated:
+    #   prune: true
+    #   selfHeal: true

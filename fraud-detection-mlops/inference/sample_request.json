@@ -1,0 +1,10 @@
+{
+  "transaction_id": "txn-002",
+  "customer_id": "cust-01",
+  "features": {
+    "amount": 980.0,
+    "merchant_category": "electronics",
+    "channel": "web",
+    "country": "US"
+  }
+}

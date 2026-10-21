@@ -1,0 +1,32 @@
+{{- if .Values.rbac.create }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "fraud.fullname" . }}-runner
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "fraud.labels" . | nindent 4 }}
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps", "secrets", "pods", "pods/log"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["get", "list", "watch", "create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "fraud.fullname" . }}-runner
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "fraud.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "fraud.fullname" . }}-runner
+subjects:
+  - kind: ServiceAccount
+    name: {{ .Values.kubeflow.serviceAccountName }}
+    namespace: {{ .Values.namespace }}
+{{- end }}
