@@ -3,27 +3,33 @@ kind: Application
 metadata:
   name: fraud-detection-mlops
   namespace: openshift-gitops
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
   source:
-    # Replace with your Git repo URL after push
-    repoURL: https://github.com/EXAMPLE/mlops-gitops.git
-    targetRevision: HEAD
+    repoURL: https://github.com/rohansawantred/mlops-gitops.git
+    targetRevision: master
     path: fraud-detection-mlops/charts/fraud-detection-mlops
     helm:
-      # Choose one: examples/values-s3.yaml or examples/values-sql.yaml
       valueFiles:
         - values.yaml
         - examples/values-s3.yaml
+      parameters:
+        # Separate from existing fraud-mlops demo app on this cluster
+        - name: namespace
+          value: fraud-detection-mlops
+        - name: createNamespace
+          value: "false"
+        # Enable after pipeline/inference image is built on the cluster
+        - name: pipeline.enableSubmitJob
+          value: "false"
+        - name: inference.enabled
+          value: "false"
   destination:
     server: https://kubernetes.default.svc
-    namespace: fraud-mlops
+    namespace: fraud-detection-mlops
   syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
     syncOptions:
       - CreateNamespace=true
-    # Enable automated sync when ready:
-    # automated:
-    #   prune: true
-    #   selfHeal: true
